@@ -7,7 +7,7 @@ public class ClienteMain {
 
     private static Icorretora corretora;
     private static IClienteCallback callback;
-    private static final String IP_SERVIDOR = "192.168.0.10"; // COLOQUE AQUI O MESMO IP DO PASSO 3
+    private static final String IP_SERVIDOR = "";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -21,6 +21,8 @@ public class ClienteMain {
             System.out.println("1. Consultar preço de uma ação");
             System.out.println("2. Listar todas as ações");
             System.out.println("3. Atualizar preço de uma ação");
+            System.out.println("4. Cadastrar nova ação");
+            System.out.println("5. Remover ação");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
 
@@ -94,15 +96,46 @@ public class ClienteMain {
                 }
                 break;
             case 3:
+                Map<String, Double> acoesAtuais = corretora.listarAcoes();
                 System.out.print("Digite o Ticker da ação a ser atualizada: ");
-                String tickerUpdate = scanner.nextLine();
-                System.out.print("Digite o novo preço: ");
-                double novoPreco = Double.parseDouble(scanner.nextLine());
-                corretora.atualizarPreco(tickerUpdate, novoPreco);
-                System.out.println("Preço atualizado com sucesso no servidor!");
+                String tickerUpdate = scanner.nextLine().toUpperCase();
+                 
+                if(tickerUpdate.isEmpty() || !acoesAtuais.containsKey(tickerUpdate)) {
+                    System.out.println("Ticker " + tickerUpdate + " não encontrado");
+                    System.out.println("Tickers disponíveis: " + acoesAtuais.keySet());
+                }
+                else{
+                    System.out.print("Digite o novo preço: ");
+                    double novoPreco = Double.parseDouble(scanner.nextLine());
+                    corretora.atualizarPreco(tickerUpdate, novoPreco);
+                    System.out.println("Preço atualizado com sucesso no servidor!");
+                }
+                break;
+
+            case 4:
+                System.out.print("Digite o Ticker da nova ação: ");
+                String newTicker = scanner.nextLine().toUpperCase();
+                if(newTicker.isEmpty() || corretora.listarAcoes().containsKey(newTicker)) {
+                    System.out.println("Ticker não pode ser vazio ou já existe!.");
+                    break;
+                }
+                else{
+                System.out.printf("Digite o preço inicial da ação " + newTicker + ": ");
+                double InitialPrice = Double.parseDouble(scanner.nextLine());
+                corretora.cadastrarAcao(newTicker, InitialPrice);
+                System.out.println("Ação " + newTicker + " cadastrada no servidor com sucesso!");
+                }
+
+                break;
+            case 5:
+                System.out.print("Digite o Ticker da ação a ser removida: ");
+                String tickerRemove = scanner.nextLine();
+                corretora.removerAcao(tickerRemove);
+                System.out.println("Ação " + tickerRemove + " removida do servidor com sucesso!");
                 break;
             case 0:
                 System.out.println("Saindo...");
+                Thread.sleep(2500); // Tempinho pra pensar na vida
                 break;
             default:
                 System.out.println("Opção inválida.");

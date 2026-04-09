@@ -7,6 +7,8 @@ public interface Icorretora extends Remote {
     double consultarPreco(String ticker) throws RemoteException;
     Map<String, Double> listarAcoes() throws RemoteException;
     void atualizarPreco(String ticker, double novoPreco) throws RemoteException;
+    void cadastrarAcao(String ticker, double precoInicial) throws RemoteException;
+    void removerAcao(String ticker) throws RemoteException;
 
     // Gerenciamento de Callbacks (Para a notificação em tempo real)
     void registrarClienteCallback(IClienteCallback cliente) throws RemoteException;

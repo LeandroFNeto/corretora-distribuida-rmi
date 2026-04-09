@@ -49,6 +49,30 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
     }
 
     @Override
+    public void cadastrarAcao(String ticker, double precoInicial) throws RemoteException {
+        String tickerUpper = ticker.toUpperCase();
+        if (!acoes.containsKey(tickerUpper)) {
+            acoes.put(tickerUpper, precoInicial);
+            System.out.println("[LOG] Nova ação cadastrada: " + tickerUpper + " -> " + precoInicial);
+            notificarTodosClientes(tickerUpper, precoInicial);
+        } else {
+            System.out.println("[LOG] Tentativa de cadastrar ativo já existente: " + tickerUpper);
+        }
+    }
+
+    @Override
+    public void removerAcao(String ticker) throws RemoteException {
+        String tickerUpper = ticker.toUpperCase().trim();
+        if (acoes.containsKey(tickerUpper)) {
+            acoes.remove(tickerUpper);
+            System.out.println("[LOG] Ação removida: " + tickerUpper);
+            notificarTodosClientes(tickerUpper, -1.0); // Preço -1.0 indica remoção
+        } else {
+            System.out.println("[LOG] Tentativa de remover ativo inexistente: " + tickerUpper);
+        }
+    }
+
+    @Override
     public void registrarClienteCallback(IClienteCallback cliente) throws RemoteException {
         clientesConectados.add(cliente);
         System.out.println("[LOG] Novo cliente registrado para callbacks. Total: " + clientesConectados.size());
