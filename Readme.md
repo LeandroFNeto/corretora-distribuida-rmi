@@ -1,5 +1,67 @@
 # Teste de Java RMI para sistemas distribuídos.
 
+#Diagrama de classes
+
+```mermaid
+classDiagram
+    class Main {
+        +main(args: String[])$ void
+    }
+
+    class ClienteCallback {
+        +ClienteCallback()
+        +notificarAtualizacaoPreco(ticker: String, novoPreco: double) void
+    }
+
+    class ClienteMain {
+        -IP_SERVIDOR: String$
+        -corretora: Icorretora$
+        -callback: IClienteCallback$
+        +main(args: String[])$ void
+        -conectarAoServidor()$ void
+        -processarOpcao(opcao: int, scanner: Scanner)$ void
+    }
+
+    class Corretoraimpl {
+        -acoes: Map~String, Double~
+        -clientesConectados: List~IClienteCallback~
+        +Corretoraimpl()
+        +consultarPreco(ticker: String) double
+        +listarAcoes() Map~String, Double~
+        +atualizarPreco(ticker: String, novoPreco: double) void
+        +cadastrarAcao(ticker: String, precoInicial: double) void
+        +removerAcao(ticker: String) void
+        +registrarClienteCallback(cliente: IClienteCallback) void
+        +removerClienteCallback(cliente: IClienteCallback) void
+        -notificarTodosClientes(ticker: String, novoPreco: double) void
+    }
+
+    class IClienteCallback {
+        <<interface>>
+        +notificarAtualizacaoPreco(ticker: String, novoPreco: double) void
+    }
+
+    class Icorretora {
+        <<interface>>
+        +consultarPreco(ticker: String) double
+        +listarAcoes() Map~String, Double~
+        +atualizarPreco(ticker: String, novoPreco: double) void
+        +cadastrarAcao(ticker: String, precoInicial: double) void
+        +removerAcao(ticker: String) void
+        +registrarClienteCallback(cliente: IClienteCallback) void
+        +removerClienteCallback(cliente: IClienteCallback) void
+    }
+
+    %% Relacionamentos de Implementação
+    ClienteCallback ..|> IClienteCallback
+    Corretoraimpl ..|> Icorretora
+
+    %% Relacionamentos de Associação/Dependência
+    ClienteMain --> Icorretora : - corretora
+    ClienteMain --> IClienteCallback : - callback
+    Corretoraimpl --> IClienteCallback : - clientesConectados
+```
+
 Primeiro Fizemos  duas interface uma para definir qual função obrigatória do cliente e funções obrigatória do corretora da corretora sendo
 * **Icorretora** = com métodos consultarpreco, listaracoes, atualizaracoes, registarclientecallback e removerclientecallback.
 
@@ -32,7 +94,7 @@ public class CorretoraImpl extends UnicastRemoteObject implements ICorretora{}
 
 ```
 
-* **ConcurrentHashMap** = magine dois clientes (dois notebooks diferentes) tentando atualizar o preço do Bitcoin (BTC) exatamente no mesmo milissegundo. Se usássemos um **HashMap** normal, a memória do servidor poderia se corromper, e o programa travaria.
+* **ConcurrentHashMap** = imagine dois clientes (dois notebooks diferentes) tentando atualizar o preço do Bitcoin (BTC) exatamente no mesmo milissegundo. Se usássemos um **HashMap** normal, a memória do servidor poderia se corromper, e o programa travaria.
 ````java
 private Map<String, Double> acoes; // Inicializado como ConcurrentHashMap
 ````
@@ -225,7 +287,7 @@ public class ClienteMain {
     }
 }
 ````
-### *Pontos do codigo.
+### Pontos do codigo.
 
 * **Transparência de Acesso:** Note que na linha corretora.consultarPreco(), o Cliente chama o método como se a Corretora estivesse na própria máquina dele. Ele não sabe que isso está viajando pela rede.
 * **Atualização em tempo real:** Se você abrir dois clientes (duas telas no CMD) e atualizar o preço no Cliente A, o Cliente B vai receber o alerta automaticamente via ClienteCallback.
