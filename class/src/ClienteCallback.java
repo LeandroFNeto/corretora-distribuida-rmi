@@ -7,10 +7,10 @@ public class ClienteCallback extends UnicastRemoteObject implements IClienteCall
         super();
     }
 
-    // Este método é chamado PELO SERVIDOR e roda em uma thread separada!
+    // Este método é chamado PELO SERVIDOR (roda numa thread separada gerida pelo RMI)
     @Override
     public void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException {
-        System.out.println("\n"); // Pula uma linha para não bagunçar se o usuário estiver digitando
+        System.out.println("\n"); // Pula uma linha para separar do texto que o utilizador já possa ter no ecrã
         System.out.println("========== NOTIFICAÇÃO EM TEMPO REAL ==========");
 
         if (novoPreco == -1.0){
@@ -20,7 +20,8 @@ public class ClienteCallback extends UnicastRemoteObject implements IClienteCall
         }
 
         System.out.println("===============================================");
-        // Truque de UX: reimprime o prompt para o usuário saber que o terminal continua esperando um comando
-        System.out.print("Escolha uma opção (ou continue digitando): ");
+
+        // Aqui está a magia: reimprime a pergunta exata onde o utilizador tinha parado
+        System.out.print(ClienteMain.ultimoPrompt);
     }
 }
