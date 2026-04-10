@@ -50,7 +50,7 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
 
     @Override
     public void cadastrarAcao(String ticker, double precoInicial) throws RemoteException {
-        String tickerUpper = ticker.toUpperCase();
+        String tickerUpper = ticker.toUpperCase().trim();
         if (!acoes.containsKey(tickerUpper)) {
             acoes.put(tickerUpper, precoInicial);
             System.out.println("[LOG] Nova ação cadastrada: " + tickerUpper + " -> " + precoInicial);
@@ -62,7 +62,7 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
 
     @Override
     public void removerAcao(String ticker) throws RemoteException {
-        String tickerUpper = ticker.toUpperCase().trim();
+        String tickerUpper = ticker.toUpperCase();
         if (acoes.containsKey(tickerUpper)) {
             acoes.remove(tickerUpper);
             System.out.println("[LOG] Ação removida: " + tickerUpper);

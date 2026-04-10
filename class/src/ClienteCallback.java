@@ -1,7 +1,11 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ClienteCallback extends UnicastRemoteObject implements IClienteCallback {
+
+    private final Queue<String> mensagensPendentes = new ConcurrentLinkedQueue<>();
 
     public ClienteCallback() throws RemoteException {
         super();
@@ -10,7 +14,22 @@ public class ClienteCallback extends UnicastRemoteObject implements IClienteCall
     // Este método é chamado PELO SERVIDOR!
     @Override
     public void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException {
-        System.out.println("\n[ALERTA DE MERCADO] -> O ativo " + ticker + " mudou de preço! Novo valor: " + novoPreco);
-        System.out.print("Escolha uma opção (1-Consultar, 2-Listar, 3-Atualizar, 0-Sair): "); // Reimprime o prompt para não bagunçar a tela
+        String mensagem;
+            if (novoPreco == -1.0){
+                mensagem = "[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.";
+            }
+            else{
+                mensagem = "[ALERTA DE MERCADO] O ativo '" + ticker + "' mudou de preço! Novo valor: " + novoPreco;
+            }
+        mensagensPendentes.add(mensagem);
+    }
+
+    public void exibirMensagensPendentes() {
+        System.out.println("\n========== NOTIFICAÇÕES RECEBIDAS ==========");
+        String msg;
+        while((msg = mensagensPendentes.poll()) != null) {
+            System.out.println(msg);
+        }
+        System.out.println("============================================");
     }
 }

@@ -7,7 +7,7 @@ public class ClienteMain {
 
     private static Icorretora corretora;
     private static IClienteCallback callback;
-    private static final String IP_SERVIDOR = "";
+    private static final String IP_SERVIDOR = "192.168.18.4";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -17,6 +17,8 @@ public class ClienteMain {
 
         int opcao = -1;
         while (opcao != 0) {
+            ((ClienteCallback) callback).exibirMensagensPendentes(); // Exibe notificações recebidas antes do menu
+
             System.out.println("\n--- MENU DA CORRETORA ---");
             System.out.println("1. Consultar preço de uma ação");
             System.out.println("2. Listar todas as ações");

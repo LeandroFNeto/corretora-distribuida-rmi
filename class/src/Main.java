@@ -4,7 +4,7 @@ import java.rmi.registry.Registry;
 public class Main {
     public static void main(String[] args) {
         try {
-            System.setProperty("java.rmi.server.hostname", ""); //trocar IP para o do servidor
+            System.setProperty("java.rmi.server.hostname", "192.168.18.4"); //trocar IP para o do servidor
 
             // 1. Instancia o nosso motor da corretora
             Icorretora corretora = new Corretoraimpl();
