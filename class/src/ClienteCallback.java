@@ -1,35 +1,26 @@
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ClienteCallback extends UnicastRemoteObject implements IClienteCallback {
-
-    private final Queue<String> mensagensPendentes = new ConcurrentLinkedQueue<>();
 
     public ClienteCallback() throws RemoteException {
         super();
     }
 
-    // Este método é chamado PELO SERVIDOR!
+    // Este método é chamado PELO SERVIDOR e roda em uma thread separada!
     @Override
     public void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException {
-        String mensagem;
-            if (novoPreco == -1.0){
-                mensagem = "[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.";
-            }
-            else{
-                mensagem = "[ALERTA DE MERCADO] O ativo '" + ticker + "' mudou de preço! Novo valor: " + novoPreco;
-            }
-        mensagensPendentes.add(mensagem);
-    }
+        System.out.println("\n"); // Pula uma linha para não bagunçar se o usuário estiver digitando
+        System.out.println("========== NOTIFICAÇÃO EM TEMPO REAL ==========");
 
-    public void exibirMensagensPendentes() {
-        System.out.println("\n========== NOTIFICAÇÕES RECEBIDAS ==========");
-        String msg;
-        while((msg = mensagensPendentes.poll()) != null) {
-            System.out.println(msg);
+        if (novoPreco == -1.0){
+            System.out.println("[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.");
+        } else {
+            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' mudou de preço! Novo valor: " + novoPreco);
         }
-        System.out.println("============================================");
+
+        System.out.println("===============================================");
+        // Truque de UX: reimprime o prompt para o usuário saber que o terminal continua esperando um comando
+        System.out.print("Escolha uma opção (ou continue digitando): ");
     }
 }
