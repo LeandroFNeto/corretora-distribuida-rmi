@@ -372,4 +372,3 @@ A Solução: Utilizamos a variável volatile String ultimoPrompt. Antes de cada 
 Sincronização: Após o usuário pressionar "Enter", a variável é zerada (ultimoPrompt = ""), garantindo que alertas futuros não repitam perguntas já respondidas.
 
 Operações Remotas: O cliente encapsula toda a lógica de negócio (Cadastrar, Remover, Atualizar e Listar) através da interface Icorretora, tratando as ações como se fossem locais, mas com tratamento de exceções para falhas de rede.
-```
