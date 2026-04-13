@@ -1,7 +1,9 @@
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
+import java.rmi.server.UnicastRemoteObject; 
 
 public class ClienteCallback extends UnicastRemoteObject implements IClienteCallback {
+
+    Corretoraimpl corretora = new Corretoraimpl();
 
     public ClienteCallback() throws RemoteException {
         super();
@@ -15,13 +17,15 @@ public class ClienteCallback extends UnicastRemoteObject implements IClienteCall
 
         if (novoPreco == -1.0){
             System.out.println("[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.");
-        } else {
-            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' mudou de preço! Novo valor: " + novoPreco);
+        }
+        else if(!corretora.listarAcoes().containsKey(ticker)) {
+            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' foi CADASTRADO no mercado! Preço inicial: " + novoPreco);
+        }
+        else {
+            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' MUDOU de preço! Novo valor: " + novoPreco);
         }
 
         System.out.println("===============================================");
-
-        // Aqui está a magia: reimprime a pergunta exata onde o utilizador tinha parado
         System.out.print(ClienteMain.ultimoPrompt);
     }
 }
