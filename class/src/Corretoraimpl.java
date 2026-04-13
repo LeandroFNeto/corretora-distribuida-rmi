@@ -36,13 +36,15 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
         return acoes;
     }
 
+    // ... restante do código (consultar, listar, etc) fica igual ...
+
     @Override
     public void atualizarPreco(String ticker, double novoPreco) throws RemoteException {
         String tickerUpper = ticker.toUpperCase();
         if (acoes.containsKey(tickerUpper)) {
             acoes.put(tickerUpper, novoPreco);
             System.out.println("[LOG] Preço atualizado: " + tickerUpper + " -> " + novoPreco);
-            notificarTodosClientes(tickerUpper, novoPreco);
+            notificarTodosClientes("ATUALIZAR", tickerUpper, novoPreco); // <-- MUDOU AQUI
         } else {
             System.out.println("[LOG] Tentativa de atualizar ativo inexistente: " + tickerUpper);
         }
@@ -54,7 +56,7 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
         if (!acoes.containsKey(tickerUpper)) {
             acoes.put(tickerUpper, precoInicial);
             System.out.println("[LOG] Nova ação cadastrada: " + tickerUpper + " -> " + precoInicial);
-            notificarTodosClientes(tickerUpper, precoInicial);
+            notificarTodosClientes("CADASTRAR", tickerUpper, precoInicial); // <-- MUDOU AQUI
         } else {
             System.out.println("[LOG] Tentativa de cadastrar ativo já existente: " + tickerUpper);
         }
@@ -66,12 +68,11 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
         if (acoes.containsKey(tickerUpper)) {
             acoes.remove(tickerUpper);
             System.out.println("[LOG] Ação removida: " + tickerUpper);
-            notificarTodosClientes(tickerUpper, -1.0); // Preço -1.0 indica remoção
+            notificarTodosClientes("REMOVER", tickerUpper, -1.0); // <-- MUDOU AQUI
         } else {
             System.out.println("[LOG] Tentativa de remover ativo inexistente: " + tickerUpper);
         }
     }
-
     @Override
     public void registrarClienteCallback(IClienteCallback cliente) throws RemoteException {
         clientesConectados.add(cliente);
@@ -84,13 +85,12 @@ public class Corretoraimpl extends UnicastRemoteObject implements Icorretora {
         System.out.println("[LOG] Cliente removido dos callbacks.");
     }
 
-    // Método interno do servidor para disparar os eventos
-    private void notificarTodosClientes(String ticker, double novoPreco) {
+    // Método interno atualizado para receber a String
+    private void notificarTodosClientes(String tipoEvento, String ticker, double novoPreco) {
         for (IClienteCallback cliente : clientesConectados) {
             try {
-                cliente.notificarAtualizacaoPreco(ticker, novoPreco);
+                cliente.notificarAtualizacaoPreco(tipoEvento, ticker, novoPreco);
             } catch (RemoteException e) {
-                // Se der erro (ex: cliente fechou o notebook), removemos ele da lista
                 System.err.println("[AVISO] Falha ao notificar cliente. Removendo da lista.");
                 clientesConectados.remove(cliente);
             }

@@ -7,7 +7,7 @@ public class ClienteMain {
 
     private static Icorretora corretora;
     private static IClienteCallback callback;
-    private static final String IP_SERVIDOR = "192.168.18.4";
+    private static final String IP_SERVIDOR = "172.28.112.1";
 
     // 1. Variável global e thread-safe para armazenar onde o usuário parou
     public static volatile String ultimoPrompt = "";
@@ -34,6 +34,7 @@ public class ClienteMain {
 
             try {
                 opcao = Integer.parseInt(scanner.nextLine());
+                ultimoPrompt = "";
                 processarOpcao(opcao, scanner);
             } catch (NumberFormatException e) {
                 System.out.println("Por favor, digite um número válido.");
@@ -84,6 +85,7 @@ public class ClienteMain {
                 ultimoPrompt = "Digite o Ticker da ação (ex: BTC): ";
                 System.out.print(ultimoPrompt);
                 String ticker = scanner.nextLine();
+                ultimoPrompt = "";
 
                 double preco = corretora.consultarPreco(ticker);
                 if (preco != -1.0) {
@@ -107,6 +109,7 @@ public class ClienteMain {
                 ultimoPrompt = "Digite o Ticker da ação a ser atualizada: ";
                 System.out.print(ultimoPrompt);
                 String tickerUpdate = scanner.nextLine().toUpperCase();
+                ultimoPrompt = "";
 
                 if(tickerUpdate.isEmpty() || !acoesAtuais.containsKey(tickerUpdate)) {
                     System.out.println("Ticker " + tickerUpdate + " não encontrado");
@@ -115,6 +118,7 @@ public class ClienteMain {
                     ultimoPrompt = "Digite o novo preço: ";
                     System.out.print(ultimoPrompt);
                     double novoPreco = Double.parseDouble(scanner.nextLine());
+                    ultimoPrompt = "";
 
                     corretora.atualizarPreco(tickerUpdate, novoPreco);
                     System.out.println("Preço atualizado com sucesso no servidor!");
@@ -125,6 +129,7 @@ public class ClienteMain {
                 ultimoPrompt = "Digite o Ticker da nova ação: ";
                 System.out.print(ultimoPrompt);
                 String newTicker = scanner.nextLine().toUpperCase();
+                ultimoPrompt = "";
 
                 if(newTicker.isEmpty() || corretora.listarAcoes().containsKey(newTicker)) {
                     System.out.println("Ticker não pode ser vazio ou já existe!.");
@@ -133,6 +138,7 @@ public class ClienteMain {
                     ultimoPrompt = "Digite o preço inicial da ação " + newTicker + ": ";
                     System.out.print(ultimoPrompt);
                     double initialPrice = Double.parseDouble(scanner.nextLine());
+                    ultimoPrompt = "";
 
                     corretora.cadastrarAcao(newTicker, initialPrice);
                     System.out.println("Ação " + newTicker + " cadastrada no servidor com sucesso!");
@@ -143,6 +149,7 @@ public class ClienteMain {
                 ultimoPrompt = "Digite o Ticker da ação a ser removida: ";
                 System.out.print(ultimoPrompt);
                 String tickerRemove = scanner.nextLine();
+                ultimoPrompt = "";
 
                 corretora.removerAcao(tickerRemove);
                 System.out.println("Ação " + tickerRemove + " removida do servidor com sucesso!");

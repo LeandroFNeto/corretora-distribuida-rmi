@@ -293,4 +293,52 @@ public class ClienteMain {
 * **Atualização em tempo real:** Se você abrir dois clientes (duas telas no CMD) e atualizar o preço no Cliente A, o Cliente B vai receber o alerta automaticamente via ClienteCallback.
 * **Tolerância a Falhas:** Se ovocê fechar a aba do Servidor enquanto o Cliente está rodando e você tentar consultar um preço, o catch (Exception e) vai pegar o erro e chamar o conectarAoServidor(), que vai ficar tentando se conectar de 5 em 5 segundos até você ligar o servidor de volta!
 
+### Modificações cliente main
 
+Acabamos tendo um problema como queríamos evitar que alguns cliente perca a modificação  de algumas da ações tentamos implementar uma fila de notificações, mas no fim o programa ficava parado esperando a interação do usuário isso logo fazia a notificação ser perdida de qualquer forma com isso em mente deixamos
+os avisos em tempo real e salvamos a última string enviado em um espaço de memória para ser reprimida na tela mas isso levava a notificação é reenviada sem necessidade por isso colocamos uma trava para so quando o ultimo prompt for salvo e for diferente de null tivemos que implementa a lógica de zerar a variável todas vez depois de terminado a função
+
+**como ficou a modificação**
+ 
+*no **clientemain***
+
+```java
+case 5:
+                ultimoPrompt = "Digite o Ticker da ação a ser removida: ";
+                System.out.print(ultimoPrompt);
+                String tickerRemove = scanner.nextLine();
+                ultimoPrompt = "";
+```
+*no **clientecallback***
+
+tabem lembrando que implementamos uma listar antes da notificação para assim diferenciar melhor o que cada cliente esta fazendo
+criando,modificando ou apagando uma ação.
+
+```java
+public void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException {
+        System.out.println("\n");
+        System.out.println("========== NOTIFICAÇÃO EM TEMPO REAL ==========");
+        
+        Map<String, Double> acoesLocais = corretora.listarAcoes();
+
+        if (novoPreco == -1.0){
+            System.out.println("[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.");
+            acoesLocais.remove(ticker); // Mantém o cliente sincronizado removendo a ação
+        }
+        else if(!acoesLocais.containsKey(ticker)) {
+            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' foi CADASTRADO no mercado! Preço inicial: " + novoPreco);
+            acoesLocais.put(ticker, novoPreco); // Salva a nova ação no cliente para ele não achar que foi cadastrada de novo depois
+        }
+        else {
+            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' MUDOU de preço! Novo valor: " + novoPreco);
+            acoesLocais.put(ticker, novoPreco); // Atualiza o preço localmente
+        }
+
+        System.out.println("===============================================");
+        
+        if (ClienteMain.ultimoPrompt != null && !ClienteMain.ultimoPrompt.isEmpty()) {
+            System.out.print(ClienteMain.ultimoPrompt);
+        }
+    }
+}
+```
