@@ -63,25 +63,34 @@ classDiagram
 ```
 
 Primeiro Fizemos  duas interface uma para definir qual função obrigatória do cliente e funções obrigatória do corretora da corretora sendo
-* **Icorretora** = com métodos consultarpreco, listaracoes, atualizaracoes, registarclientecallback e removerclientecallback.
+* **Icorretora** = Define as operações remotas do servidor, incluindo:
 
+Consultas: consultarPreco e listarAcoes.
+
+Gestão de Mercado: atualizarPreco, cadastrarAcao e removerAcao.
+
+Callbacks: registrarClienteCallback e removerClienteCallback para notificações em tempo real.
 
 ```java
-public interface ICorretora extends Remote {
-    double consultarPreco(String ticker) throws RemoteException;
-    Map<String, Double> listarAcoes() throws RemoteException;
-    void atualizarPreco(String ticker, double novoPreco) throws RemoteException;
-    
-    // Callbacks para atualização em tempo real
-    void registrarClienteCallback(IClienteCallback cliente) throws RemoteException;
-    void removerClienteCallback(IClienteCallback cliente) throws RemoteException;
+public interface Icorretora extends Remote {
+  // Consultas e Operações Básicas
+  double consultarPreco(String ticker) throws RemoteException;
+  Map<String, Double> listarAcoes() throws RemoteException;
+  void atualizarPreco(String ticker, double novoPreco) throws RemoteException;
+  void cadastrarAcao(String ticker, double precoInicial) throws RemoteException;
+  void removerAcao(String ticker) throws RemoteException;
+
+  // Gerenciamento de Callbacks (Para a notificação em tempo real)
+  void registrarClienteCallback(IClienteCallback cliente) throws RemoteException;
+  void removerClienteCallback(IClienteCallback cliente) throws RemoteException;
 }
 ````
-* **IclienteCallback** = com método notificaratualizacaodepreco.
+* **IclienteCallback** = interface que define como o cliente recebe notificações do servidor, através do método notificaratualizacaodepreco, permitindo identificar se o evento é de Cadastro, Atualização ou Remoção de uma ação, além do ticker e do novo preço.
 
 ```java
 public interface IClienteCallback extends Remote {
-    void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException;
+  // Agora o servidor avisa o que é: "CADASTRAR", "ATUALIZAR" ou "REMOVER"
+  void notificarAtualizacaoPreco(String tipoEvento, String ticker, double novoPreco) throws RemoteException;
 }
 ```
 
@@ -111,20 +120,22 @@ A CopyOnWriteArrayList cria uma "cópia" segura da lista toda vez que alguém en
 
 * **Tolerância a Falhas Básica (queda do Cliente).**
 
-  O servidor tenta chamar o método no cliente. Se o notebook do seu do outro usuario perder o Wi-Fi ou ele fechar o programa, o RMI vai disparar uma RemoteException.
+  O servidor percorre a lista de clientes conectados para enviar atualizações. Agora, além do ticker e preço, ele envia o tipo do evento (Cadastro, Atualização ou Remoção). Caso um cliente perca a conexão, o RMI dispara uma RemoteException, e o servidor automaticamente o remove da lista para evitar desperdício de recursos.
 ````java
-private void notificarTodosClientes(String ticker, double novoPreco) {
-    for (IClienteCallback cliente : clientesConectados) {
-        try {
-            cliente.notificarAtualizacaoPreco(ticker, novoPreco);
-        } catch (RemoteException e) {
-            clientesConectados.remove(cliente); // Remove o "morto"
-        }
+// Método interno atualizado para receber a String
+private void notificarTodosClientes(String tipoEvento, String ticker, double novoPreco) {
+  for (IClienteCallback cliente : clientesConectados) {
+    try {
+      cliente.notificarAtualizacaoPreco(tipoEvento, ticker, novoPreco);
+    } catch (RemoteException e) {
+      System.err.println("[AVISO] Falha ao notificar cliente. Removendo da lista.");
+      clientesConectados.remove(cliente);
     }
+  }
+}
 }
 ````
-O bloco try/catch captura esse erro silenciosamente. Em vez do servidor inteiro travar porque um cliente sumiu, ele simplesmente aceita que a conexão caiu e remove esse cliente da lista de notificações. O sistema continua rodando perfeitamente para os outros clientes conectados.
-
+O bloco try/catch foi atualizado para lidar com as novas notificações de evento (Cadastro, Atualização e Remoção). Caso o servidor tente enviar um desses eventos e o cliente não responda (por queda de rede ou fechamento do programa), o RMI captura a RemoteException. O servidor então remove esse cliente da lista de notificações silenciosamente, garantindo que o sistema continue rodando sem interrupções para os demais usuários conectados.
 
 ## Mudando a logica do main.
 
@@ -160,20 +171,52 @@ public class ServidorMain {
 
 ## Agora a parte do cliente.
 
-Seguimos o mesmo passo de tornar a classe cliente em objeto remoto e implementar a interface.
+Para que o cliente seja capaz de receber mensagens do servidor sem precisar solicitá-las, a classe ClienteCallback é transformada em um objeto remoto.
+
+O que ocorre nesta classe:
+
+Processamento de Eventos: A classe utiliza uma estrutura de decisão para identificar a natureza da mensagem enviada pelo servidor.
+
+Alertas Customizados: Dependendo da instrução recebida, o sistema exibe alertas específicos para o usuário:
+
+REMOVER: Informa que um ativo foi retirado do mercado.
+
+CADASTRAR: Notifica a chegada de uma nova ação e seu preço inicial.
+
+ATUALIZAR: Indica uma oscilação no valor de um ativo já existente.
+
+Manutenção da Interface: Após exibir um alerta, a classe garante que o menu de navegação do usuário seja impresso novamente na tela, evitando que as notificações interrompam a usabilidade do terminal.
 
 ````java
-public class ClienteCallbackImpl extends UnicastRemoteObject implements IClienteCallback {
+}public class ClienteCallback extends UnicastRemoteObject implements IClienteCallback {
 
-    public ClienteCallbackImpl() throws RemoteException {
-        super();
-    }
+  public ClienteCallback() throws RemoteException {
+    super();
+  }
+
+  @Override
+  public void notificarAtualizacaoPreco(String tipoEvento, String ticker, double novoPreco) throws RemoteException {
+    System.out.println("\n");
+    System.out.println("========== NOTIFICAÇÃO EM TEMPO REAL ==========");
     
-    @Override
-    public void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException {
-        System.out.println("\n[ALERTA DE MERCADO] -> O ativo " + ticker + " mudou de preço! Novo valor: " + novoPreco);
-        System.out.print("Escolha uma opção (1-Consultar, 2-Listar, 3-Atualizar, 0-Sair): "); // Reimprime o prompt para não bagunçar a tela
+    switch (tipoEvento) {
+      case "REMOVER":
+        System.out.println("[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.");
+        break;
+      case "CADASTRAR":
+        System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' foi CADASTRADO! Preço: " + novoPreco);
+        break;
+      case "ATUALIZAR":
+        System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' MUDOU de preço! Novo valor: " + novoPreco);
+        break;
     }
+
+    System.out.println("===============================================");
+    
+    if (ClienteMain.ultimoPrompt != null && !ClienteMain.ultimoPrompt.isEmpty()) {
+      System.out.print(ClienteMain.ultimoPrompt);
+    }
+  }
 }
 ````
 
@@ -311,34 +354,22 @@ case 5:
 ```
 *no **clientecallback***
 
-tabem lembrando que implementamos uma listar antes da notificação para assim diferenciar melhor o que cada cliente esta fazendo
-criando,modificando ou apagando uma ação.
+também lembrando que implementamos uma listar antes da notificação para assim diferenciar melhor o que cada cliente esta fazendo
+criando, modificando ou apagando uma ação.
 
-```java
-public void notificarAtualizacaoPreco(String ticker, double novoPreco) throws RemoteException {
-        System.out.println("\n");
-        System.out.println("========== NOTIFICAÇÃO EM TEMPO REAL ==========");
-        
-        Map<String, Double> acoesLocais = corretora.listarAcoes();
+* **ClienteMain: Interface Inteligente e Resiliência**
 
-        if (novoPreco == -1.0){
-            System.out.println("[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.");
-            acoesLocais.remove(ticker); // Mantém o cliente sincronizado removendo a ação
-        }
-        else if(!acoesLocais.containsKey(ticker)) {
-            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' foi CADASTRADO no mercado! Preço inicial: " + novoPreco);
-            acoesLocais.put(ticker, novoPreco); // Salva a nova ação no cliente para ele não achar que foi cadastrada de novo depois
-        }
-        else {
-            System.out.println("[ALERTA DE MERCADO] O ativo '" + ticker + "' MUDOU de preço! Novo valor: " + novoPreco);
-            acoesLocais.put(ticker, novoPreco); // Atualiza o preço localmente
-        }
+A classe ClienteMain gerencia a interface de terminal e a robustez da conexão. O maior desafio resolvido nesta classe foi o Gerenciamento de Fluxo de Interface para lidar com notificações assíncronas (Callbacks).
 
-        System.out.println("===============================================");
-        
-        if (ClienteMain.ultimoPrompt != null && !ClienteMain.ultimoPrompt.isEmpty()) {
-            System.out.print(ClienteMain.ultimoPrompt);
-        }
-    }
-}
+Destaques do Funcionamento:
+
+Tolerância a Falhas Dinâmica: O método conectarAoServidor() utiliza um loop de tentativa e erro com Thread.sleep(5000). Isso permite que o cliente seja iniciado antes do servidor ou recupere a conexão automaticamente caso o servidor sofra um reinício, sem que o usuário precise fechar o programa.
+
+Gestão de Prompt (UX/UI no Terminal): * O Problema: Em sistemas RMI com Callback, uma notificação pode chegar exatamente enquanto o usuário está digitando um valor, "quebrando" a linha visual do terminal.
+
+A Solução: Utilizamos a variável volatile String ultimoPrompt. Antes de cada entrada de dados (scanner.nextLine()), o prompt atual é salvo. Se uma notificação chegar via ClienteCallback, ela imprime o alerta e, logo em seguida, reimprime o ultimoPrompt.
+
+Sincronização: Após o usuário pressionar "Enter", a variável é zerada (ultimoPrompt = ""), garantindo que alertas futuros não repitam perguntas já respondidas.
+
+Operações Remotas: O cliente encapsula toda a lógica de negócio (Cadastrar, Remover, Atualizar e Listar) através da interface Icorretora, tratando as ações como se fossem locais, mas com tratamento de exceções para falhas de rede.
 ```
