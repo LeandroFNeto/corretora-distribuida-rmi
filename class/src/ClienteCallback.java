@@ -12,7 +12,6 @@ public class ClienteCallback extends UnicastRemoteObject implements IClienteCall
         System.out.println("\n");
         System.out.println("========== NOTIFICAÇÃO EM TEMPO REAL ==========");
 
-        // O switch resolve tudo de forma elegante
         switch (tipoEvento) {
             case "REMOVER":
                 System.out.println("[ALERTA] Ativo '" + ticker + "' foi REMOVIDO do mercado.");
@@ -27,7 +26,6 @@ public class ClienteCallback extends UnicastRemoteObject implements IClienteCall
 
         System.out.println("===============================================");
 
-        // Só reimprime se a variável existir e não for vazia
         if (ClienteMain.ultimoPrompt != null && !ClienteMain.ultimoPrompt.isEmpty()) {
             System.out.print(ClienteMain.ultimoPrompt);
         }

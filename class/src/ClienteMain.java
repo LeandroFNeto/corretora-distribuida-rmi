@@ -7,15 +7,13 @@ public class ClienteMain {
 
     private static Icorretora corretora;
     private static IClienteCallback callback;
-    private static final String IP_SERVIDOR = "172.28.112.1";
-
-    // 1. Variável global e thread-safe para armazenar onde o usuário parou
+    private static final String IP_SERVIDOR = "";
     public static volatile String ultimoPrompt = "";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        // Tenta conectar a primeira vez
+        //tenta conectar a primeira vez
         conectarAoServidor();
 
         int opcao = -1;
@@ -28,7 +26,6 @@ public class ClienteMain {
             System.out.println("5. Remover ação");
             System.out.println("0. Sair");
 
-            // 2. Salva o prompt do menu principal antes de pedir a opção
             ultimoPrompt = "Escolha uma opção: ";
             System.out.print(ultimoPrompt);
 
@@ -41,7 +38,7 @@ public class ClienteMain {
             } catch (Exception e) {
                 System.err.println("[ERRO] Perda de conexão com o servidor!");
                 System.out.println("[SISTEMA] Tentando reconectar...");
-                conectarAoServidor(); // Tolerância a falhas
+                conectarAoServidor();
             }
         }
 
@@ -49,7 +46,7 @@ public class ClienteMain {
             if (corretora != null) corretora.removerClienteCallback(callback);
             System.out.println("Desconectado com sucesso.");
         } catch (Exception e) {
-            // Ignora erro ao fechar se o servidor já estiver fora do ar
+            //ignora erro ao fechar se o servidor já estiver fora do ar
         }
         System.exit(0);
     }

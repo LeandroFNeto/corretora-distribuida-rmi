@@ -4,15 +4,14 @@ import java.rmi.registry.Registry;
 public class Main {
     public static void main(String[] args) {
         try {
-            System.setProperty("java.rmi.server.hostname", "172.28.112.1"); //trocar IP para o do servidor
+            System.setProperty("java.rmi.server.hostname", ""); //trocar IP para o do servidor
 
-            // 1. Instancia o nosso motor da corretora
+            //instancia o nosso motor da corretora
             Icorretora corretora = new Corretoraimpl();
 
-            // 2. Inicia o RMI Registry na porta padrão 1099 (não precisa rodar comando por fora)
+            //inicia o RMI Registry na porta padrão 1099
             Registry registry = LocateRegistry.createRegistry(1099);
 
-            // 3. Apelida o nosso serviço e publica no catálogo
             registry.rebind("ServicoCorretora", corretora);
 
             System.out.println("[OK] Servidor RMI da Corretora no ar!");
